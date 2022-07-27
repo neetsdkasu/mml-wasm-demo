@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@neetsdkasu" />
+    <meta name="twitter:creator" content="@neetsdkasu" />
+    <meta property="og:url" content="https://neetsdkasu.github.io/b2c2-wasm-demo/" />
+    <meta property="og:type" content="article" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta property="og:title" content="mml-web-demo" />
+    <meta property="og:image" content="https://neetsdkasu.github.io/mml-wasm-demo/card.png" />
+    <meta property="og:description" content="MML-on-OAPのMMLからSMFファイル(MIDIファイル)へ変換する処理を移植してみたやつのWebデモ" />
+    <title>MML Webデモ</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header>
+      <h2>MML Webデモ</h2>
+      <div>MMLからSMFファイル(MIDファイル)を生成する</div>
+    </header>
+    <main>
+      <section>
+        <h5>MML</h5>
+        <div class="samples">
+          <button id="sample1" disabled>サンプル1</button>
+          <button id="sample2" disabled>サンプル2</button>
+          <button id="sample3" disabled>サンプル3</button>
+        </div>
+        <textarea disabled name="mml_src" id="mml_src" rows="22" cols="80">T104
+{0
+    L8
+    FF&lt;CC
+    DDC4
+    &lt;B-B-AA
+    G4FR
+}
+$0
+[2
+    L8
+    &lt;CC&gt;B-B-
+    AAG4
+]
+$0
+</textarea>
+      </section>
+      <hr />
+      <div id="msg"></div>
+      <hr />
+      <section>
+        <h5>SMF</h5>
+        <div>
+          <select disabled name="smf_inst" id="smf_inst"></select>
+          <button disabled id="smf_translate">SMFへ変換！</button>
+        </div>
+        <br />
+        <div><span>ファイル:</span> <span id="smf_file"></span></div>
+        <br />
+        <div><audio id="smf_audio" controls hidden></audio></div>
+      </section>
+      <hr />
+      <section>
+        <h5>MML構文<h5>
+        <pre class="note">*1テンポ *1分解能 *128ブロック 1*コード
+※コード部はO4L4開始
+※開始時の音量は100
+※大文字小文字は区別しない
+
+テンポ (4の倍数、20～508、省略時120)
+T数字  120bpmなら T120
+
+分解能(1～127、省略時64)
+%数字   64なら %64
+※分解能64なら全音符が64の長さ、四分音符が16の長さ
+
+ブロック (番号 0～127、連番昇順、O4L4開始)
+{番号 1*コード }
+例  {0 CDEFGAB }
+
+コード
+
+音符コード (長さ 1～分解能)
+ 音 C D E F G A B
+ シャープ C+ D+ F+ G+ A+
+ (#も可) C# D# F# G# A#
+ フラット D- E- G- A- B-
+ 休符 R
+四分音符のCの音なら  C4
+付点八分音符のCの音なら  C8.
+分解能指定で四分音符(16)のCの音なら  C(16)
+長さ省略時はデフォ長さ デフォ長さのCの音なら  C
+
+オクターブ指定コード (数字、 -1～9)
+O数字   オクターブ5なら O5
+※オクターブ4のAの音が440Hz
+
+オクターブ上げコード (1上げる)
+&lt;
+
+オクターブ下げコード (1下げる)
+&gt;
+
+デフォ長さ指定コード
+L長さ
+四分音符の長さなら  L4
+付点八分音符の長さなら  L8.
+分解能指定で四分音符(16)の長さなら  L(16)
+
+ブロック再生コード
+$番号   5番ブロック再生なら $5
+
+リピート再生コード (回数 2～127)
+[回数 1*コード ]
+例 [3 CDEFGAB ]
+
+音量指定コード (音量 0～100)
+V音量   音量70なら V70
+
+音値コード (音値 0～127)
+  O-1のCの音値が0
+  O4のCの音値が60
+  O4のAの音値が69
+  O9のGの音値が127
+四分音符のO4のCの音なら  N(60)4
+付点八分音符のO4のCの音なら  N(60)8.
+分解能指定で四分音符(16)のO4のCの音なら  N(60)(16)
+長さ省略時はデフォ長さ デフォ長さのO4のCの音なら  N(60)
+
+オクターブとデフォ長さは指定コード以降に記述される一連コードに影響
+例
+ {0 O7L16 A B }
+ O5L8 C &lt; D [2 E O3L2 F ] $0 G
+ は
+ O5L8 C &lt; D O6L8 E O3L2 F O6L8 E O3L2 F O7L16 A B O3L2 G
+ に相当
+ 
+音量は指定コード以降のすべての発音に影響
+例
+ {0 A V70 B }
+ V90 C D [2 E V80 F ] $0 G
+ は
+ V90 C D E V80 F E F A V70 B G
+ に相当
+</pre>
+      </section>
+    </main>
+    <footer>
+      <nav>
+        <ul>
+          <li><a href="https://github.com/neetsdkasu/mml" class="exit">
+              MMLのGitHubリポジトリへ
+            </a></li>
+          <li><a href="https://github.com/neetsdkasu/mml-wasm-demo" class="exit">
+              MML WebデモのGitHubリポジトリへ
+            </a></li>
+        </ul>
+      </nav>
+      <p>
+        シェア:
+        <a href="https://b.hatena.ne.jp/entry/s/neetsdkasu.github.io/mml-wasm-demo/" class="hatena-bookmark-button">B!ブックマーク</a>
+        <a class="twitter-share-button" href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fneetsdkasu.github.io%2Fmml-wasm-demo%2F&text=MML2SMF&via=neetsdkasu">Twitter</a>
+        <a class="facebook-share-button" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fneetsdkasu.github.io%2Fmml-wasm-demo">facebook</a>
+      </p>
+
+      <br />
+
+      <p class="note">※Webデモで使用しているJavaScriptファイルおよびWebAssemblyファイルは<a href="https://github.com/rustwasm/wasm-pack" rel="external nofollow noreferrer">wasm-pack</a>で生成しました</p>
+    </footer>
+    <script src="./script.js" type="module"></script>
+  </body>
+</html>
